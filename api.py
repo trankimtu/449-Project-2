@@ -415,7 +415,7 @@ def home():
             </li><br>
 
             <li>
-                Display default 5 recent posts with create post <br>
+                Display default 2 recent posts with create post <br>
                 <a>http://localhost:5000/posts</a> <br>
 
                 Please copy this Json structure <br>
