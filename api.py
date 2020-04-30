@@ -405,8 +405,8 @@ def home():
             </li><br>
 
             <li>
-                Delete post by PostID = 99: <br> 
-                <a>http://localhost:5000/posts/delete/99</a> 
+                Delete post by PostID = 100: <br> 
+                <a>http://localhost:5000/posts/delete/100</a> 
             </li><br>
 
             <li>
