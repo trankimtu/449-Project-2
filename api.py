@@ -8,15 +8,11 @@ import flask_api
 from flask import request
 from flask_api import status, exceptions
 
-
-
-
-
-
-
+# ==============================================================================================
+# Method
+# ==============================================================================================
 
 def Create_Table(table_name, dynamodb_client, dynamodb_resource):
-    print('Create table')
     myTable = dynamodb_client.create_table(
             
         TableName = table_name,
@@ -40,44 +36,30 @@ def Create_Table(table_name, dynamodb_client, dynamodb_resource):
             'ReadCapacityUnits': 100,
             'WriteCapacityUnits': 100,
         }
-                    
-
     )
 
     # Wait until the table exists.
     dynamodb_resource.meta.client.get_waiter('table_exists').wait(TableName=table_name)
 
 def Delete_Table(table_name, dynamodb_resource):
-    print('Delete table with table name = ', table_name)
-
     delTable = dynamodb_resource.Table(table_name)
     delTable.delete()
 
 def List_All_Table(dynamodb_client):
-    print('List all table')
-
     existing_tables = dynamodb_client.list_tables()['TableNames']
-    print('existing_tables = ', existing_tables)
-
     return existing_tables
 
 def Table_Status(table_name, dynamodb_resource):
-    print('Table Status')
-
     myTable = dynamodb_resource.Table(table_name)
     status = myTable.table_status
-    print('Status of table', table_name)
-    print(status)
+    return status
     
 def Table_Length(table_name, dynamodb_resource):
     myTable = dynamodb_resource.Table(table_name)
-
     table_length = myTable.item_count
-    print('table_length = ',table_length)
     return table_length
 
 def Scan_Table (table_name, dynamodb_resource):
-    print('Scan table')
     all_posts = []
     myTable = dynamodb_resource.Table(table_name)
 
@@ -89,54 +71,23 @@ def Scan_Table (table_name, dynamodb_resource):
         all_posts.append (items[i])
         i += 1
     return all_posts
-    # for item in items:
-    #     print(item)
 
 def Create_Post (table_name, dynamodb_resource, username, posttitle, content, community, urlresource):
-    print('Create post')
     table_length = Table_Length(table_name, dynamodb_resource)
     if table_length == 0:
-        print('table_length in if = ', table_length)
         last_PostID = 0
     else:
-        print('table_length in else = ', table_length)
-
         all_Posts = Get_All_Posts(table_name, dynamodb_resource)
-
-        # print('\n\n')
-
-        # print('all_Posts in else = ', all_Posts)
-
-        print('\n\n')
         last_PostID = 1
-
-        # i = 0
-        # while i < len(all_Posts):
 
         for post in all_Posts:
             if post['PostID']> last_PostID:
                 last_PostID = post['PostID']
-        # last_PostID = all_Posts[0]['PostID']
-        print('last_PostID in else = ',last_PostID)
 
     currentID = last_PostID + 1
-    print ('currentID = ', currentID)
-
-    # currentID = Table_Length(table_name, dynamodb_resource) + 1
-
-    # strCurrentID = str(currentID)
 
     now = datetime.datetime.now()
     strNow = str(now)
-
-    # print('type of strCurrentID = ', type(strCurrentID))
-    print('type of currentID = ', type(currentID))
-    # print('type of username = ', type(username))
-    # print('type of posttitle = ', type(posttitle))
-    # print('type of strNow = ', type(strNow))
-    # print('type of content = ', type(content))
-    # print('type of community = ', type(community))
-    # print('type of urlresource = ', type(urlresource))
 
     input_json = {
         'PostID'      : currentID, 
@@ -151,7 +102,6 @@ def Create_Post (table_name, dynamodb_resource, username, posttitle, content, co
     myTable = dynamodb_resource.Table(table_name)
 
     myTable.put_item(Item = input_json)
-    print('after myTable.put')
     return input_json
 
 def Initial_Posts(table_name, dynamodb_resource):
@@ -290,7 +240,6 @@ def Initial_Posts(table_name, dynamodb_resource):
     input_json = Create_Post (table_name, dynamodb_resource, 'User 100', 'Post Title 100', 'Content 100', 'workplace', 'www.URLResource100.com')
 
 def Get_Post(table_name, dynamodb_resource, postID):
-    # print('Get post at PostID = ', postID )
     try:
         myTable = dynamodb_resource.Table(table_name)
 
@@ -298,37 +247,23 @@ def Get_Post(table_name, dynamodb_resource, postID):
             Key = {'PostID':postID}
         )
         post = get_post['Item']
-        # print('Post at ',postID, post)
         return post
     except:
         print('Post is not exist')
 
 def Get_All_Posts(table_name, dynamodb_resource):
-    print('Get All Posts')
     all_posts = []
     myTable = dynamodb_resource.Table(table_name)
 
     scanResponse = myTable.scan(TableName=table_name)
     items = scanResponse['Items']
-    # items.sort()
     i = 0
     while i < len(items):
         all_posts.append (items[i])
         i += 1
-    print(all_posts)
 
-    # newlist = sorted(list_to_be_sorted, key=lambda k: k['name']) 
     sorted_all_posts = sorted(all_posts, key=lambda k: k['PostID'])
     return sorted_all_posts
-    # allPosts = []
-    # table_length = Table_Length(table_name, dynamodb_resource)
-
-    # i = 1
-    # while i < table_length + 1:
-    #     post = Get_Post(table_name, dynamodb_resource, i)
-    #     allPosts.append(post)
-    #     i += 1
-    # return allPosts
 
 def Get_n_Recent_Posts(table_name, dynamodb_resource, n):
     allPosts = Get_All_Posts(table_name, dynamodb_resource)
@@ -347,7 +282,6 @@ def Get_n_Recent_Posts(table_name, dynamodb_resource, n):
             else:
                 break
         except:
-            # i += 1
             run -= 1
 
             pass
@@ -363,10 +297,6 @@ def Get_n_Recent_Posts_by_Community(table_name, dynamodb_resource, n, community)
     i = 0
     while i < n:
         try:
-            # print('allPost[run] = ', allPosts[run])
-            print("allPost[run]['Community'] = ", allPosts[run]['Community'])
-            # print('community = ', community)
-
             if allPosts[run]['Community'] == community:
                 # print('Community = ', community)
                 n_recent_posts_by_community.append(allPosts[run])
@@ -379,14 +309,12 @@ def Get_n_Recent_Posts_by_Community(table_name, dynamodb_resource, n, community)
         except:
             i += 1
             pass
-    print('n_recent_posts_by_community = ',n_recent_posts_by_community)
+    # print('n_recent_posts_by_community = ',n_recent_posts_by_community)
     return n_recent_posts_by_community
 
 def Update_Post(table_name, dynamodb_resource, postID, 
                 username, posttitle, content, community, urlresource):
-    print('Update post at PostID = ', postID )
-    
-    
+
     myTable = dynamodb_resource.Table(table_name)
 
     now = datetime.datetime.now()
@@ -409,8 +337,6 @@ def Update_Post(table_name, dynamodb_resource, postID,
     )
 
 def Delete_Post(table_name, dynamodb_resource, postID):
-    print('Delete post at PostID = ', postID )
-
     myTable = dynamodb_resource.Table(table_name)
     
     myTable.delete_item(
@@ -425,16 +351,10 @@ def Delete_All_Posts(table_name, dynamodb_resource):
 
 
 # ==============================================================================================
-
-
-
-
-
-
-
+# Start Program
+# ==============================================================================================
 
 app = flask_api.FlaskAPI(__name__)
-# # app.config.from_envvar('APP_CONFIG')
 
 table_name = "posts"
 print(table_name)
@@ -446,27 +366,15 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-west-2', endpoint_url
 # Get the service resource.
 dynamodb_resource = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
 
-# app.config['DYNAMO_TABLES'] = myTable
-# dynamo = Dynamo(app)
-
 app.config['DYNAMO_TABLES'] = [
     dict(
         TableName=table_name,
-        # TableName='posts',
         KeySchema=[dict(AttributeName='PostID', KeyType='HASH')],
         AttributeDefinitions=[dict(AttributeName='PostID', AttributeType='N')],
         ProvisionedThroughput=dict(ReadCapacityUnits=100, WriteCapacityUnits=100)
     ), 
  ],
 print('app.config = ', app.config['DYNAMO_TABLES'])
-
-# existing_tables = List_All_Table(dynamodb_client)
-# Delete_All_Posts(table_name, dynamodb_resource)
-# Table_Length(table_name, dynamodb_resource)
-
-# try:
-#     Delete_Table(table_name, dynamodb_resource)
-# except:
 
 existing_tables = List_All_Table(dynamodb_client)
 
@@ -475,86 +383,17 @@ if table_name in existing_tables:   # posts table exist -> do nothing
     Delete_All_Posts(table_name, dynamodb_resource)
     Delete_Table(table_name, dynamodb_resource)
 
-    # print('outside init posts table is exist')
 
-# else:   # create posts table
-#     print('outside init else')
 Create_Table(table_name, dynamodb_client, dynamodb_resource)
 
 
 describeTable = dynamodb_client.describe_table(TableName=table_name)
-print('before initial post')
 Initial_Posts(table_name, dynamodb_resource)
 
-print('after initial post')
 
-@app.cli.command('init')
-# Delete_Table(table_name, dynamodb_resource)
-def init_db():
-    print('This line in init')
-    existing_tables = List_All_Table(dynamodb_client)
-
-    if table_name in existing_tables:   # posts table exist -> do nothing
-        print('posts table is exist')
-
-    else:   # create posts table
-        print('='*20)
-        Create_Table(table_name, dynamodb_client, dynamodb_resource)
-    print('='*20)
-    Table_Status(table_name, dynamodb_resource)
-    print('='*20)
-    table_length = Table_Length(table_name, dynamodb_resource)
-
-    print('='*20)
-    describeTable = dynamodb_client.describe_table(TableName=table_name)
-    print ('describeTable = ', describeTable)
-
-    print('='*20)
-    posts_Table = dynamodb_resource.Table('posts')
-    print(posts_Table.creation_date_time)
-    print('='*20)
-    print('Scan Table')
-    Scan_Table (table_name, dynamodb_resource)
-
-    print('='*20)
-
-#     # Insert data to post table
-#     print('before create post')
-    Initial_Posts(table_name, dynamodb_resource)
-
-    
-#     print('='*20)
-#     Scan_Table (table_name, dynamodb_resource)
-#     print('='*20)
-
-#     post = Get_Post(table_name, dynamodb_resource, 5)
-#     print('Post ad PostID  5 = ', post)
-#     post = Get_Post(table_name, dynamodb_resource, 6)
-#     print('Post ad PostID  6 = ', post)
-#     post = Get_Post(table_name, dynamodb_resource, 7)
-#     print('Post ad PostID  7 = ', post)
-#     table_length = Table_Length(table_name, dynamodb_resource)
-
-#     print(table_length)
-    
-
-#     print('='*20)
-#     Update_Post(table_name, dynamodb_resource, 100, 
-#                 'User 1001', 'Post Title 1001', 'Content 1001', 'school', 'www.URLResource1001.com')
-#     post = Get_Post(table_name, dynamodb_resource, 100)
-#     print('='*20)
-
-
-#     Delete_Post(table_name, dynamodb_resource, 100)
-#     post = Get_Post(table_name, dynamodb_resource, 100)
-    
-
-    
-
-
-
-
-
+# ==============================================================================================
+# Routing
+# ==============================================================================================
 
 @app.route('/', methods=['GET'])
 def home():
@@ -586,7 +425,7 @@ def home():
             </li><br>
             <li>
                 Display 15 recent post with create post <br>
-                <a>http://localhost:5000/posts?n=15</a>
+                <a>http://localhost:5000/posts?n=15</a><br>
 
                 Please copy this Json structure <br>
                 {"Username": "User 100", "PostTitle": "Post Title 100", "Content": "Content 100", "Community": "home", "URLResource": "www.URLResource100.com"}
@@ -605,34 +444,16 @@ def home():
         '''
     
     
-
+# Get all posts
 @app.route('/posts/all', methods=['GET'])
 def all_posts():
-    # allPosts = []
-    # table_length = Table_Length(table_name, dynamodb_resource)
-
-    # i = 1
-    # while i < table_length + 1:
-    #     post = Get_Post(table_name, dynamodb_resource, i)
-    #     allPosts.append(post)
-    #     i += 1
     allPosts = Get_All_Posts(table_name, dynamodb_resource)
-
     return list(allPosts)
 
 
-
-# # def all_posts():
-# #     # all_posts = queries.all_posts()
-# #     # return list(all_posts)
-# #     return {'a':'b', 'c':'d'}
-
-
-
-# # Get post by PostID
+# Get post by PostID
 @app.route('/posts/<int:PostID>', methods=['GET'])
 def post_ID(PostID):
-    # return '''<h1>Post ID</h1>'''
 
     try:
         post = Get_Post(table_name, dynamodb_resource, PostID)
@@ -647,7 +468,6 @@ def post_ID(PostID):
 def n_recent_posts():
     if request.method == 'GET':
         n = request.args.get('n', 2)
-        # n = request.args.get('n')
         n = int(n)
         n_recent_posts = Get_n_Recent_Posts(table_name, dynamodb_resource, n)
 
@@ -662,119 +482,29 @@ def n_recent_posts():
         Community   = str(request.data.get('Community', ''))
         URLResource   = str(request.data.get('URLResource', ''))
 
-        print('Username = ', Username)
-        print('PostTitle = ', PostTitle)
-        print('Content = ', Content)
-        print('Community = ', Community)
-        print('URLResource = ', URLResource)
+        # print('Username = ', Username)
+        # print('PostTitle = ', PostTitle)
+        # print('Content = ', Content)
+        # print('Community = ', Community)
+        # print('URLResource = ', URLResource)
 
 
         input_json = Create_Post (table_name, dynamodb_resource, Username, PostTitle, Content, Community, URLResource)
         return input_json
-# {"Username": "User 100", "PostTitle": "Post Title 100", "Content": "Content 100", "Community": "home", "URLResource": "www.URLResource100.com"}
 
-
-
-
-# # /posts', methods=['GET', 'POST'])
-# # def n_recent_posts():
-# #     if request.method == 'GET':
-# #         n = request.args.get('n', 5)
-# #         post = queries.n_post_by_time(n=n)
-# #         if post:
-# #             return list(post)
-# #         else:
-# #             raise exceptions.NotFound()
-
-# #         # return filter_posts(request.args)
-# #     elif request.method == 'POST':
-# #         return create_post(request.data)
-
-
-
-
-
-
-
-
-# # def create_post(post):
-# #     required_fields = ['Username', 'PostTitle', 'Content', 'Community', 'URLResource']
-
-# #     if not all([field in post for field in required_fields]):
-# #         raise exceptions.ParseError()
-# #     try:
-# #         post['PostID'] = queries.create_post(**post)
-# #     except Exception as e:
-# #         return { 'error': str(e) }, status.HTTP_409_CONFLICT
-
-# #     return post, status.HTTP_201_CREATED, {
-# #         'Location': f'/posts/{post["PostID"]}'
-# #     }
-
-# # def filter_posts(query_parameters):
-# #     PostID      = query_parameters.get('PostID')
-# #     Username    = query_parameters.get('Username')
-# #     PostTitle   = query_parameters.get('PostTitle')
-# #     PostDate    = query_parameters.get('PostDate')
-# #     Content     = query_parameters.get('Content')
-# #     Community   = query_parameters.get('Community')
-# #     URLResource = query_parameters.get('URLResource')
-
-
-# #     query = "SELECT * FROM posts WHERE"
-# #     to_filter = []
-
-# #     if PostID:
-# #         query += ' PostID=? AND'
-# #         to_filter.append(PostID)
-# #     if Username:
-# #         query += ' Username=? AND'
-# #         to_filter.append(Username)
-# #     if PostTitle:
-# #         query += ' PostTitle=? AND'
-# #         to_filter.append(PostTitle)
-# #     if PostDate:
-# #         query += ' PostDate=? AND'
-# #         to_filter.append(PostDate)
-# #     if Content:
-# #         query += ' Content=? AND'
-# #         to_filter.append(Content)
-# #     if Community:
-# #         query += ' Community=? AND'
-# #         to_filter.append(Community)
-# #     if URLResource:
-# #         query += ' URLResource=? AND'
-# #         to_filter.append(URLResource)
-# #     if not (PostID or Username or PostTitle or PostDate or Content or Community or URLResource):
-# #         raise exceptions.NotFound()
-
-# #     query = query[:-4] + ';'
-
-# #     results = queries._engine.execute(query, to_filter).fetchall()
-
-# #     return list(map(dict, results))
-
-    
-
-
+# Delete Post by PostID
 @app.route('/posts/delete/<int:PostID>', methods=['GET', 'DELETE'])
 def delete(PostID):
     if request.method == 'DELETE':
 
         Delete_Post(table_name, dynamodb_resource, PostID)
 
-
-
-        # if delquery == 0:
-        #     raise exceptions.NotFound()
-        # else:
-        #     return '', status.HTTP_204_NO_CONTENT
     else:
         return {'status': 'OK'}
 
 
 
-# # List the n most recent posts to a particular community
+# List the n most recent posts to a particular community
 @app.route('/posts/<string:Community>/<int:n>', methods=['GET'])
 def post_by_community(Community, n):
     print('Community = ', Community)
@@ -783,8 +513,6 @@ def post_by_community(Community, n):
     n_recent_posts_by_community = Get_n_Recent_Posts_by_Community(table_name, dynamodb_resource, n, Community)
 
     return list(n_recent_posts_by_community)
-
-
 
 
 
