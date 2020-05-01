@@ -5,7 +5,8 @@ import datetime
 from flask_dynamo import Dynamo
 from flask import Flask
 import flask_api
-from flask import request
+from flask import request, current_app
+
 from flask_api import status, exceptions
 
 # ==============================================================================================
@@ -376,19 +377,26 @@ app.config['DYNAMO_TABLES'] = [
  ],
 print('app.config = ', app.config['DYNAMO_TABLES'])
 
-existing_tables = List_All_Table(dynamodb_client)
+@app.cli.command('test')
+def test():
+    print('Test')
+
+@app.cli.command('init')
+def init_db():
+    print('abc')
+    existing_tables = List_All_Table(dynamodb_client)
 
 
-if table_name in existing_tables:   # posts table exist -> do nothing
-    Delete_All_Posts(table_name, dynamodb_resource)
-    Delete_Table(table_name, dynamodb_resource)
+    if table_name in existing_tables:   # posts table exist -> do nothing
+        Delete_All_Posts(table_name, dynamodb_resource)
+        Delete_Table(table_name, dynamodb_resource)
 
 
-Create_Table(table_name, dynamodb_client, dynamodb_resource)
+    Create_Table(table_name, dynamodb_client, dynamodb_resource)
 
 
-describeTable = dynamodb_client.describe_table(TableName=table_name)
-Initial_Posts(table_name, dynamodb_resource)
+    describeTable = dynamodb_client.describe_table(TableName=table_name)
+    Initial_Posts(table_name, dynamodb_resource)
 
 
 # ==============================================================================================
