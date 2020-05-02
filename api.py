@@ -46,12 +46,8 @@ def Delete_Table(table_name, dynamodb_resource):
     delTable.delete()
 
 def List_All_Table(dynamodb_client):
-    print('List All Tables')
-    print('dynamodb_client = ', dynamodb_client)
 
     existing_tables = dynamodb_client.list_tables()['TableNames']
-    # existing_tables = dynamodb_client.list_tables()
-    # print(existing_tables)
     return existing_tables
 
 def Table_Status(table_name, dynamodb_resource):
@@ -243,7 +239,6 @@ def Initial_Posts(table_name, dynamodb_resource):
     input_json = Create_Post (table_name, dynamodb_resource, 'User 099', 'Post Title 099', 'Content 099', 'workplace', 'www.URLResource099.com')
 
     input_json = Create_Post (table_name, dynamodb_resource, 'User 100', 'Post Title 100', 'Content 100', 'workplace', 'www.URLResource100.com')
-    print("Initial DB is DONE")
     
 def Get_Post(table_name, dynamodb_resource, postID):
     try:
@@ -363,7 +358,6 @@ def Delete_All_Posts(table_name, dynamodb_resource):
 app = flask_api.FlaskAPI(__name__)
 
 table_name = "posts"
-print(table_name)
 
 # Get the service client.
 dynamodb_client = boto3.client('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
@@ -380,33 +374,23 @@ app.config['DYNAMO_TABLES'] = [
         ProvisionedThroughput=dict(ReadCapacityUnits=100, WriteCapacityUnits=100)
     ), 
  ],
-print('app.config = ', app.config['DYNAMO_TABLES'])
-# existing_tables = List_All_Table(dynamodb_client)
-# print('\n\nexisting_tables = ', existing_tables)
+# print('app.config = ', app.config['DYNAMO_TABLES'])
 
 
 @app.cli.command('init')
 def init_db():
-    print('This line in Init\n\n')
-    print('dynamodb_client = ', dynamodb_client)
-    print('dynamodb_resource = ', dynamodb_resource)
-
+    print('Please wait until Initial Post Database is Done before runing service on browser')
     existing_tables = List_All_Table(dynamodb_client)
-    print('Done existing_table')
 
     if table_name in existing_tables:   # posts table exist -> do nothing
-        print('\n\nTable Exist\n\n')
         Delete_All_Posts(table_name, dynamodb_resource)
-        print('\n\nDone delete all post\n\n')
         Delete_Table(table_name, dynamodb_resource)
-        print('\n\nDone delete table\n\n')
 
     Create_Table(table_name, dynamodb_client, dynamodb_resource)
-    print('\n\nDone create table\n\n')
 
     # describeTable = dynamodb_client.describe_table(TableName=table_name)
     Initial_Posts(table_name, dynamodb_resource)
-    print('\n\nDone intitial posts\n\n')
+    print("Initial Post Database is DONE")
 
 # ==============================================================================================
 # Routing
@@ -499,13 +483,6 @@ def n_recent_posts():
         Community   = str(request.data.get('Community', ''))
         URLResource   = str(request.data.get('URLResource', ''))
 
-        # print('Username = ', Username)
-        # print('PostTitle = ', PostTitle)
-        # print('Content = ', Content)
-        # print('Community = ', Community)
-        # print('URLResource = ', URLResource)
-
-
         input_json = Create_Post (table_name, dynamodb_resource, Username, PostTitle, Content, Community, URLResource)
         return input_json
 
@@ -530,36 +507,5 @@ def post_by_community(Community, n):
     n_recent_posts_by_community = Get_n_Recent_Posts_by_Community(table_name, dynamodb_resource, n, Community)
 
     return list(n_recent_posts_by_community)
-
-
-
-# # @app.route('/posts/<string:Community>', methods=['GET'])
-# # def post_by_community(Community):
-# #     # Community = request.args.get('Community')
-# #     print('Community = ', Community)
-# #     n = request.args.get('n',5)
-# #     n = int(n)
-# #     # print('n = ', n)
-# #     n_recent_posts_by_community = Get_n_Recent_Posts_by_Community(table_name, dynamodb_resource, n, Community)
-
-# #     return list(n_recent_posts_by_community)
-
-
-
-#     #     post = queries.n_post_by_time(n=n)
-#     #     if post:
-#     #         return list(post)
-#     #     else:
-#     #         raise exceptions.NotFound()
-
-#     #     # return filter_posts(request.args)
-#     # elif request.method == 'POST':
-#     #     return create_post(request.data)
-
-
-
-
-# # # http://localhost:5000/posts?n=10
-# # # http://localhost:5000/posts/Community_3?n=3
 
 
